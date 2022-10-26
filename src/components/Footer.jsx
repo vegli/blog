@@ -1,8 +1,14 @@
 import React from 'react'
+import Logo from "../img/logo.jpg"
 
 function Footer() {
   return (
-    <div>Footer</div>
+    <footer>
+      <img src={Logo} alt=""/>
+      <span>
+        Napravljeno uz pomoc <b>React.js</b> !
+      </span>
+    </footer>
   )
 }
 
