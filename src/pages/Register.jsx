@@ -12,6 +12,8 @@ const Register = () => {
     password:"",
   })
 
+  //const[file,setFile]=useState(null);
+
   const[err,setError] = useState(null)
 
   const navigate = useNavigate()

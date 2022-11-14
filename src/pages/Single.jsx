@@ -1,33 +1,78 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Menu from '../components/Menu';
+import axios from "axios"
+import moment from "moment"
+import { useContext } from 'react';
+import { AuthContext } from '../context/authContext';
+import DOMPurify from "dompurify"
 
 
 const Single = () => {
+
+  const [post,setPost] = useState({})
+
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const postId = location.pathname.split("/")[2] // secka ceo URL na 3 po ovim kosim crtama, uzimamo treci iseckami element a to je ovaj broj ili ti ID
+
+  const {currentUser} = useContext(AuthContext)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`/posts/${postId}`);
+        setPost(res.data); 
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    fetchData();
+  }, [postId]);
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`/posts/${postId}`)
+      navigate("/")
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getText = (html) =>{
+    const doc = new DOMParser().parseFromString(html, "text/html")
+    return doc.body.textContent
+  }
+
   return (
     <div className='single'>
       <div className="content">
-      <img src="https://www.storynory.com/wp-content/uploads/2022/05/cat-portrait-coverart-1200x1200.jpg" alt=""/>
+      <img src={`../upload/${post?.img}`} alt=""/>
       <div className="user">
-        <img src="https://www.kindpng.com/picc/m/105-1055656_account-user-profile-avatar-avatar-user-profile-icon.png" alt=''/>
+        {post.userImg && <img src={post.userImg} alt=''/>} 
         <div className="info">
-          <span>John</span>
-          <p>Posted 2 days ago</p>
+          <span>{post.username}</span>
+          <p>Posted {moment(post.date).fromNow()}</p>
         </div>
-        <div className="edit">
-          <Link to={`/write?edit=2`}>
+        {currentUser.username === post.username &&
+          (<div className="edit">
+          <Link to={`/write?edit=2`} state={post}>
           <img src="https://www.freeiconspng.com/thumbs/edit-icon-png/edit-editor-pen-pencil-write-icon--4.png" alt=""/>
           </Link>
-          <img src="https://cdn-icons-png.flaticon.com/512/1799/1799391.png" alt=""/>
-        </div>
+          <img onClick={handleDelete} src="https://cdn-icons-png.flaticon.com/512/1799/1799391.png" alt=""/>
+        </div>)}
       </div>
-      <h1>Lorem ipsum dolor sit amet consectetur adipisicing elit!</h1>
-      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime, cum. Pariatur quam qui quaerat, perspiciatis dolorum, voluptas officiis odio accusamus sapiente cum, ullam veniam minima doloribus provident nam. Quaerat, dolore?
-        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Perspiciatis temporibus in molestiae dolores iure et explicabo sed magni impedit porro ipsum fugit expedita sunt distinctio nulla mollitia quisquam, recusandae ratione?</p> 
+      <h1>{post.title}</h1>
+        <p
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(post.desc),
+          }}
+        ></p>
      </div>
-      <Menu/>
+      <Menu cat = {post.cat}/>
     </div>
   )
 }
